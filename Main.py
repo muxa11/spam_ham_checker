@@ -11,7 +11,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
-
+from sklearn.pipeline import Pipeline
 
 def create_dataset():
     path = 'emails/'
@@ -29,25 +29,24 @@ def create_dataset():
             data = f.read()
         mail_text.append(data)
         f.close()
+    print(len(labels))
     return emails, mail_text, labels
 
 
-def process_words(list_mail_text):
-    words = []
-    # Get a List of all words, punctuations and numbers in all mails
-    for mail in list_mail_text:
-        mail.lower()
-        # temp =
-        words += ([w for w in mail.split(" ")])
-    # remove punctuations from the words
-    words = [c for c in words if c not in string.punctuation]
+def process_words(mail):
+    words = [char for char in mail if char not in string.punctuation]
+    words = ''.join(words)
+    words = [c for c in words.split() if c not in stopwords.words('english')]
     ps = PorterStemmer()
-    # Stemming Words
     words = [ps.stem(w) for w in words]
+    # Get a List of all words, punctuations and numbers in all mails
+    # print(words)
+    # print('\n')
+    # remove punctuations from the words
+    # Stemming Words
     # Remove Duplicate words
-    words = list(dict.fromkeys(words))
+    # words = list(dict.fromkeys(words))
     # remove common words (stopwords) which dont help in distinguishing
-    words = [c for c in words if c not in stopwords.words('english')]
     # print(words)
     return words
 
@@ -60,21 +59,30 @@ if __name__ == '__main__':
     """
         Do some Visualzation
     """
-
+    mails_with_labels['length'] = mails_with_labels['Text'].apply(len)
+    bar_plt = sns.barplot(x = 'Label', y = 'length', data=mails_with_labels)
+    plt.show()
+    sns.countplot(x='Label', data=mails_with_labels)
+    plt.show()
+   # mails_with_labels.hist(column='length', by='label', bins=50, figsize=(12, 4))
+    # words = process_words(mail_text)
+    # dictionary = Counter(words)
+    # print(dictionary)
+"""
     bag_of_words_transformer = CountVectorizer(analyzer=process_words)
     bag_of_words_transformer.fit(mails_with_labels['Text'])
     mails_bag_of_words = bag_of_words_transformer.transform(mails_with_labels['Text'])
+    print(mails_bag_of_words.shape)
+    print(mails_bag_of_words.nnz)
 
-    tfidf_vectorizer = TfidfTransformer().fit(mails_bag_of_words)
-    mails_tfidf = tfidf_vectorizer.transform(mails_bag_of_words)
+    tfidf_transformer = TfidfTransformer().fit(mails_bag_of_words)
+    mails_tfidf = tfidf_transformer.transform(mails_bag_of_words)
     X = mails_tfidf
     y = mails_with_labels['Label']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=101)
-
     model = MultinomialNB()
     model.fit(X_train, y_train)
-    pred = model.predict(X_test)
-
-    print(classification_report(y_test, pred))
-    print(accuracy_score(y_test, pred))
-    print (confusion_matrix(y_test, pred))
+    predictions = model.predict(X_test)
+    print(classification_report(y_test, predictions))
+    print(accuracy_score(y_test, predictions))
+    print(confusion_matrix(y_test, predictions))"""
